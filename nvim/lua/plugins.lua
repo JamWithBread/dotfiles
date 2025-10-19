@@ -49,7 +49,7 @@ return require('packer').startup(
         -- use 'glepnir/lspsaga.nvim', { 'branch': 'main' }
         use 'folke/lsp-colors.nvim'
         use {'nvim-treesitter/nvim-treesitter'}
-        use 'jose-elias-alvarez/null-ls.nvim'
+        --use 'jose-elias-alvarez/null-ls.nvim' -- deprecated, incompatible with nvim 0.11+
 
         -- Colorschemes
         use 'rose-pine/neovim' 
