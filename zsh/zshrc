@@ -1,0 +1,190 @@
+# ============================================
+# General Purpose Zsh Configuration
+# ============================================
+
+# Basic Aliases
+alias vim="nvim"
+
+# Environment variables
+export EDITOR="nvim"
+export SPROMPT='zsh: correct %F{1}%R%f to %F{2}%r%f [nyae]? '
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# macOS: Use GNU utilities instead of BSD ones
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    export HOMEBREW_BIN="/opt/homebrew/bin/brew"
+    if command -v brew &> /dev/null; then
+        export PATH="$(${HOMEBREW_BIN} --prefix)/bin:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/sbin:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/findutils/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/gawk/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/gnu-sed/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/gnu-tar/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/gnu-which/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/grep/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/libtool/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/make/libexec/gnubin/:$PATH"
+        export PATH="$(${HOMEBREW_BIN} --prefix)/opt/coreutils/libexec/gnubin/:$PATH"
+        
+        # Load dircolors if available
+        command -v dircolors &> /dev/null && eval $(dircolors)
+    fi
+fi
+
+# Linux: Load dircolors
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    command -v dircolors &> /dev/null && eval $(dircolors)
+fi
+
+# Increase file descriptor limit
+ulimit -n 10240
+
+# ============================================
+# Completion Configuration
+# ============================================
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _list _oldlist _expand _complete _ignored _match _correct _approximate _prefix
+zstyle ':completion:*' completions 1
+zstyle ':completion:*' condition 0
+zstyle ':completion:*' expand prefix suffix
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' glob 1
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' insert-unambiguous false
+zstyle ':completion:*' matcher-list '+' '+m:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+r:|[._-]=* r:|=*' '+l:|=* r:|=*'
+zstyle ':completion:*' max-errors 2 numeric
+zstyle ':completion:*' menu select=1
+zstyle ':completion:*' original true
+zstyle ':completion:*' preserve-prefix '//[^/]##/'
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' substitute 1
+zstyle ':completion:*' verbose true
+
+# ============================================
+# Zinit Plugin Manager
+# ============================================
+ZINIT_HOME="$HOME/.local/share/zinit/zinit.git"
+
+# Install Zinit if not present
+if [[ ! -f $ZINIT_HOME/zinit.zsh ]]; then
+    print -P "%F{33}▓▒░ Installing Zinit...%f"
+    command mkdir -p "$(dirname $ZINIT_HOME)"
+    command git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME" && \
+        print -P "%F{34}▓▒░ Installation successful.%f" || \
+        print -P "%F{160}▓▒░ Installation failed.%f"
+fi
+
+source "${ZINIT_HOME}/zinit.zsh"
+
+# ============================================
+# Zinit Plugins
+# ============================================
+
+# Prezto modules (core functionality)
+zstyle ':prezto:*:*' color 'yes'
+zinit snippet PZTM::environment
+zinit snippet PZTM::terminal
+zinit snippet PZTM::editor
+zinit snippet PZTM::history
+zinit snippet PZTM::directory
+zinit snippet PZTM::spectrum
+zinit snippet PZTM::utility
+zinit snippet PZTM::completion
+
+# Colors
+zinit snippet OMZP::colorize
+zinit snippet OMZP::colored-man-pages
+
+# Copy utilities
+zinit snippet OMZP::copypath
+zinit snippet OMZP::copyfile
+zinit snippet OMZP::cp
+
+# Enhanced directory navigation
+zinit ice pick"init.sh"
+zinit light "b4b4r07/enhancd"
+zinit snippet OMZP::dircycle
+zinit snippet OMZP::dirhistory
+zinit light "zdharma-continuum/zsh-navigation-tools"
+zinit light "Tarrasch/zsh-bd"
+
+# Archive extraction
+zinit snippet OMZP::extract
+
+# Git
+zinit snippet OMZP::git
+
+# History plugins
+zinit light "zsh-users/zsh-syntax-highlighting"
+zinit light "zsh-users/zsh-history-substring-search"
+zinit snippet OMZP::history
+zinit light "zdharma-continuum/history-search-multi-word"
+zinit light "zsh-users/zsh-autosuggestions"
+
+# Powerlevel10k theme
+zinit ice depth"1"
+zinit light "romkatv/powerlevel10k"
+
+# Miscellaneous utilities
+zinit light "hchbaw/zce.zsh"
+zinit light "jreese/zsh-titles"
+zinit light "zdharma-continuum/zsnapshot"
+zinit light "Tarrasch/zsh-functional"
+zinit light "zsh-users/zaw"
+zinit light "softmoth/zsh-vim-mode"
+
+# System utilities
+zinit snippet OMZP::systemadmin
+zinit snippet OMZP::sudo
+
+# Tmux
+zinit snippet OMZP::tmux
+zinit snippet OMZP::tmuxinator
+
+# Zinit annexes
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+# ============================================
+# Key Bindings
+# ============================================
+bindkey '^f' forward-word
+bindkey '^b' backward-word
+bindkey '^e' end-of-line
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
+
+# Autosuggest configuration
+ZSH_AUTOSUGGEST_USE_ASYNC=true
+
+# ============================================
+# Powerlevel10k Configuration
+# ============================================
+(( ! ${+functions[p10k]} )) || p10k finalize
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
+[[ ! -f $HOME/.p10k.zsh ]] || source $HOME/.p10k.zsh
+
+# ============================================
+# Initialize Completion System
+# ============================================
+autoload -Uz compinit && compinit
+autoload -Uz compdef
+autoload -Uz promptinit && promptinit
+
+# ============================================
+# Zoxide (modern cd replacement)
+# ============================================
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init zsh)"
+fi
+
+# ============================================
+# Machine-specific Configuration
+# ============================================
+# Source machine-specific config if it exists
+[[ -f $HOME/.zshrc.local ]] && source $HOME/.zshrc.local

@@ -1,0 +1,16 @@
+# Nvim - generated files
+nvim/plugin/packer_compiled.lua
+nvim/.netrwhist
+
+# Zsh - sensitive/generated files
+zsh/zsh_history
+zsh/.zcompdump*
+zsh/.zsh_sessions/
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+
+# Machine-specific configs
+.zshrc.local
