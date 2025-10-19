@@ -159,18 +159,10 @@ setup_symlinks() {
         echo "📦 Backups created with timestamp: $TIMESTAMP"
     fi
 }
-
 install_nvim_plugins() {
     echo ""
-    echo "🔌 Installing Neovim plugins..."
-    echo "This could take a while"
-    
-    if command -v nvim &> /dev/null; then
-        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' || true
-        echo "✅ Neovim plugins installed"
-    else
-        echo "⚠️  Neovim not found, skipping plugin installation"
-    fi
+    echo "✅ Neovim setup complete"
+    echo "Note: Run ':PackerSync' inside nvim on first launch to install plugins"
 }
 
 
