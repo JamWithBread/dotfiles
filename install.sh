@@ -160,18 +160,19 @@ setup_symlinks() {
     fi
 }
 
-# Install nvim plugins
 install_nvim_plugins() {
     echo ""
     echo "🔌 Installing Neovim plugins..."
+    echo "This could take a while"
     
     if command -v nvim &> /dev/null; then
-        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 2>/dev/null || true
+        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' || true
         echo "✅ Neovim plugins installed"
     else
         echo "⚠️  Neovim not found, skipping plugin installation"
     fi
 }
+
 
 # Main installation
 main() {
