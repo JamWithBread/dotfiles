@@ -176,7 +176,7 @@ install_nvim_plugins() {
 # Main installation
 main() {
     echo "╔════════════════════════════════════════╗"
-    echo "║     Dotfiles Installation Script      ║"
+    echo "║     Dotfiles Installation Script       ║"
     echo "╚════════════════════════════════════════╝"
     echo ""
     
@@ -188,7 +188,7 @@ main() {
     
     echo ""
     echo "╔════════════════════════════════════════╗"
-    echo "║     ✅ Installation Complete!         ║"
+    echo "║     ✅ Installation Complete!          ║"
     echo "╚════════════════════════════════════════╝"
     echo ""
     echo "Next steps:"
