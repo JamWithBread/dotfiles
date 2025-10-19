@@ -106,6 +106,9 @@ setup_symlinks() {
     echo "🔗 Creating symlinks..."
     
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    echo "Dotfiles directory: $DOTFILES_DIR"
     
     # Backup and symlink nvim
     if [ -d ~/.config/nvim ] || [ -L ~/.config/nvim ]; then
@@ -118,7 +121,7 @@ setup_symlinks() {
         fi
     fi
     mkdir -p ~/.config
-    ln -sf "$(pwd)/nvim" ~/.config/nvim
+    ln -sf "$DOTFILES_DIR/nvim" ~/.config/nvim
     echo "✅ Linked nvim config"
     
     # Backup and symlink tmux
@@ -129,7 +132,7 @@ setup_symlinks() {
             mv ~/.tmux.conf ~/.tmux.conf.backup.$TIMESTAMP
         fi
     fi
-    ln -sf "$(pwd)/tmux.conf" ~/.tmux.conf
+    ln -sf "$DOTFILES_DIR/tmux.conf" ~/.tmux.conf
     echo "✅ Linked tmux config"
     
     # Backup and symlink zshrc
@@ -140,7 +143,7 @@ setup_symlinks() {
             mv ~/.zshrc ~/.zshrc.backup.$TIMESTAMP
         fi
     fi
-    ln -sf "$(pwd)/zsh/zshrc" ~/.zshrc
+    ln -sf "$DOTFILES_DIR/zsh/zshrc" ~/.zshrc
     echo "✅ Linked zshrc"
     
     # Backup and symlink p10k
@@ -151,7 +154,7 @@ setup_symlinks() {
             mv ~/.p10k.zsh ~/.p10k.zsh.backup.$TIMESTAMP
         fi
     fi
-    ln -sf "$(pwd)/zsh/p10k.zsh" ~/.p10k.zsh
+    ln -sf "$DOTFILES_DIR/zsh/p10k.zsh" ~/.p10k.zsh
     echo "✅ Linked p10k config"
     
     if [ ! -z "$(ls ~/.*.backup.$TIMESTAMP 2>/dev/null)" ] || [ ! -z "$(ls ~/.config/*.backup.$TIMESTAMP 2>/dev/null)" ]; then
@@ -159,6 +162,10 @@ setup_symlinks() {
         echo "📦 Backups created with timestamp: $TIMESTAMP"
     fi
 }
+
+
+
+
 install_nvim_plugins() {
     echo ""
     echo "✅ Neovim setup complete"
