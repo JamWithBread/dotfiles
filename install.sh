@@ -45,43 +45,86 @@ install_dependencies() {
         echo "Installing GNU utilities..."
         brew install coreutils findutils gnu-sed gawk grep gnu-tar
         
-        # Set zsh as default shell
-        if [ "$SHELL" != "$(which zsh)" ]; then
-            echo "Setting zsh as default shell..."
-            chsh -s $(which zsh)
-        fi
-        
     elif [ "$OS" = "linux" ]; then
         echo "Updating package lists..."
         sudo apt-get update
         
         echo "Installing core tools..."
-        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget
+        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip
+        
+        # Install FUSE for AppImage support
+        echo "Installing FUSE for Neovim AppImage..."
+        sudo apt-get install -y fuse libfuse2
         
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
         NVIM_VERSION="v0.11.4"
         
-        # Download and install Neovim AppImage
-        wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
-        chmod u+x nvim.appimage
-        sudo mv nvim.appimage /usr/local/bin/nvim
+        # Check if nvim is already installed with correct version
+        if command -v nvim &> /dev/null; then
+            CURRENT_VERSION=$(nvim --version 2>/dev/null | head -n 1 | awk '{print $2}')
+            if [ "$CURRENT_VERSION" = "$NVIM_VERSION" ]; then
+                echo "✅ Neovim $NVIM_VERSION already installed"
+            else
+                echo "Current Neovim version: $CURRENT_VERSION"
+                echo "Installing Neovim $NVIM_VERSION..."
+                wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
+                chmod u+x nvim.appimage
+                sudo mv nvim.appimage /usr/local/bin/nvim
+            fi
+        else
+            # Download and install Neovim AppImage
+            wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
+            chmod u+x nvim.appimage
+            sudo mv nvim.appimage /usr/local/bin/nvim
+        fi
         
         # Verify installation
-        /usr/local/bin/nvim --version | head -n 1
+        echo "Verifying Neovim installation..."
+        if /usr/local/bin/nvim --version &> /dev/null; then
+            /usr/local/bin/nvim --version | head -n 1
+            echo "✅ Neovim installed successfully"
+        else
+            echo "❌ Neovim installation failed"
+            exit 1
+        fi
         
         # Install zoxide
         echo "Installing zoxide..."
-        curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
-        
-        # Set zsh as default shell
-        if [ "$SHELL" != "$(which zsh)" ]; then
-            echo "Setting zsh as default shell..."
-            chsh -s $(which zsh)
+        if ! command -v zoxide &> /dev/null; then
+            curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+        else
+            echo "✅ zoxide already installed"
         fi
     fi
     
     echo "✅ Dependencies installed"
+}
+
+# Set zsh as default shell
+setup_zsh() {
+    echo ""
+    echo "🐚 Configuring zsh..."
+    
+    ZSH_PATH=$(which zsh)
+    
+    # Add zsh to valid shells if not already there
+    if ! grep -q "$ZSH_PATH" /etc/shells 2>/dev/null; then
+        echo "Adding zsh to /etc/shells..."
+        echo "$ZSH_PATH" | sudo tee -a /etc/shells > /dev/null
+    fi
+    
+    # Change default shell
+    if [ "$SHELL" != "$ZSH_PATH" ]; then
+        echo "Setting zsh as default shell..."
+        echo "Note: You'll need to log out and back in for this to take effect"
+        chsh -s "$ZSH_PATH" || {
+            echo "⚠️  Could not change shell automatically. Run this manually:"
+            echo "    chsh -s $ZSH_PATH"
+        }
+    else
+        echo "✅ zsh is already the default shell"
+    fi
 }
 
 # Install Zinit
@@ -89,7 +132,7 @@ install_zinit() {
     echo ""
     echo "📦 Installing Zinit plugin manager..."
     
-    ZINIT_HOME="$HOME/.local/share/zinit/zinit.git"
+    ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
     
     if [ -d "$ZINIT_HOME" ]; then
         echo "Zinit already installed, updating..."
@@ -191,8 +234,80 @@ setup_symlinks() {
 # Install nvim plugins
 install_nvim_plugins() {
     echo ""
-    echo "✅ Neovim setup complete"
-    echo "Note: Run ':PackerSync' inside nvim on first launch to install plugins"
+    echo "📦 Installing Neovim plugins..."
+    
+    # Try to install plugins non-interactively
+    if command -v nvim &> /dev/null; then
+        echo "Running PackerSync..."
+        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 2>&1 | grep -v "^$" || true
+        echo "✅ Neovim plugins installed"
+        echo "Note: Run ':PackerSync' inside nvim if you encounter any issues"
+    else
+        echo "⚠️  Neovim not found in PATH"
+        echo "Note: Run ':PackerSync' inside nvim on first launch to install plugins"
+    fi
+}
+
+# Verify installation
+verify_installation() {
+    echo ""
+    echo "🔍 Verifying installation..."
+    
+    local all_good=true
+    
+    # Check nvim
+    if command -v nvim &> /dev/null; then
+        echo "✅ nvim: $(nvim --version | head -n 1)"
+    else
+        echo "❌ nvim: not found"
+        all_good=false
+    fi
+    
+    # Check tmux
+    if command -v tmux &> /dev/null; then
+        echo "✅ tmux: $(tmux -V)"
+    else
+        echo "❌ tmux: not found"
+        all_good=false
+    fi
+    
+    # Check zsh
+    if command -v zsh &> /dev/null; then
+        echo "✅ zsh: $(zsh --version)"
+    else
+        echo "❌ zsh: not found"
+        all_good=false
+    fi
+    
+    # Check symlinks
+    if [ -L ~/.config/nvim ]; then
+        echo "✅ nvim config symlinked"
+    else
+        echo "❌ nvim config not symlinked"
+        all_good=false
+    fi
+    
+    if [ -L ~/.tmux.conf ]; then
+        echo "✅ tmux config symlinked"
+    else
+        echo "❌ tmux config not symlinked"
+        all_good=false
+    fi
+    
+    if [ -L ~/.zshrc ]; then
+        echo "✅ zshrc symlinked"
+    else
+        echo "❌ zshrc not symlinked"
+        all_good=false
+    fi
+    
+    if [ "$all_good" = true ]; then
+        echo ""
+        echo "✅ All checks passed!"
+    else
+        echo ""
+        echo "⚠️  Some checks failed. Review the output above."
+    fi
 }
 
 # Main installation
@@ -206,7 +321,9 @@ main() {
     install_zinit
     install_packer
     setup_symlinks
+    setup_zsh
     install_nvim_plugins
+    verify_installation
     
     echo ""
     echo "╔════════════════════════════════════════╗"
@@ -214,15 +331,16 @@ main() {
     echo "╚════════════════════════════════════════╝"
     echo ""
     echo "Next steps:"
-    echo "  1. Start zsh: zsh"
-    echo "  2. On first zsh launch, Zinit will install all plugins (~30 seconds)"
+    echo "  1. Start a new shell session: exec zsh"
+    echo "  2. Zinit will install plugins on first zsh launch (~30 seconds)"
     echo "  3. If p10k wizard appears, configure or press 'q' to use existing config"
-    echo "  4. Run 'nvim' and execute ':PackerSync' to install plugins"
+    echo "  4. Verify nvim plugins: nvim +PackerStatus"
     echo ""
     echo "Tips:"
     echo "  • Create ~/.zshrc.local for machine-specific configs"
-    echo "  • Customize p10k theme by running: p10k configure"
+    echo "  • Customize p10k theme: p10k configure"
     echo "  • Install a Nerd Font for best experience (see README.md)"
+    echo "  • If shell didn't change, log out and back in"
     echo ""
 }
 
