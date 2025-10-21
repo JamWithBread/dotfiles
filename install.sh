@@ -74,11 +74,35 @@ install_dependencies() {
         sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
         
         # Download AppImage
-        wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
+        echo "Downloading Neovim AppImage..."
+        if wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage 2>&1; then
+            echo "✅ Download complete"
+        else
+            echo "❌ Download failed, trying tarball method..."
+            rm -f nvim.appimage
+            
+            # Jump directly to tarball method
+            wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
+            tar xzf nvim-linux64.tar.gz
+            sudo cp -r nvim-linux64/* /usr/local/
+            rm -rf nvim-linux64 nvim-linux64.tar.gz
+            
+            # Verify tarball installation
+            if /usr/local/bin/nvim --version &> /dev/null; then
+                echo "✅ Neovim installed from tarball"
+            else
+                echo "❌ All installation methods failed"
+                exit 1
+            fi
+            
+            return
+        fi
+        
         chmod u+x nvim.appimage
         
         # Test if AppImage works
-        if ./nvim.appimage --version &> /dev/null; then
+        echo "Testing AppImage..."
+        if timeout 5 ./nvim.appimage --version &> /dev/null; then
             echo "✅ AppImage works, installing to /usr/local/bin/nvim"
             sudo mv nvim.appimage /usr/local/bin/nvim
         else
@@ -86,16 +110,22 @@ install_dependencies() {
             rm -f nvim.appimage
             
             # Download and extract AppImage manually
-            wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
+            echo "Downloading Neovim AppImage for extraction..."
+            wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
             chmod u+x nvim.appimage
             
             # Extract AppImage
-            ./nvim.appimage --appimage-extract &> /dev/null || {
+            echo "Extracting AppImage..."
+            if timeout 10 ./nvim.appimage --appimage-extract &> /dev/null; then
+                echo "✅ Extraction successful"
+            else
                 echo "❌ AppImage extraction failed, trying tarball method..."
                 rm -rf squashfs-root nvim.appimage
                 
                 # Download pre-built tarball instead
-                wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
+                echo "Downloading Neovim tarball..."
+                wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
+                echo "Extracting tarball..."
                 tar xzf nvim-linux64.tar.gz
                 sudo cp -r nvim-linux64/* /usr/local/
                 rm -rf nvim-linux64 nvim-linux64.tar.gz
@@ -109,7 +139,7 @@ install_dependencies() {
                 fi
                 
                 return
-            }
+            fi
             
             # Move extracted files
             sudo rm -rf /usr/local/nvim-extracted
@@ -117,6 +147,7 @@ install_dependencies() {
             rm -f nvim.appimage
             
             # Create wrapper script
+            echo "Creating nvim wrapper..."
             sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
 #!/bin/sh
 exec /usr/local/nvim-extracted/AppRun "$@"
