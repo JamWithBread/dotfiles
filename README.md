@@ -31,15 +31,19 @@ Portable configuration for Neovim, Tmux, and Zsh with Powerlevel10k theme.
 
 ## Installation
 ```bash
-# (Conditional) If in fresh linux env:
+# In fresh Linux environment:
 apt-get update && apt-get install -y git curl sudo
 
 # Clone the repository
 git clone https://github.com/JamWithBread/dotfiles.git ~/dotfiles
 
-# Run the install script
+# Make script executable and run
 cd ~/dotfiles
+chmod +x install.sh
 ./install.sh
+
+# Start zsh (or log out/in if shell change failed)
+exec zsh
 ```
 
 The script will:
