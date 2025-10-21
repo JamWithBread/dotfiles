@@ -52,10 +52,6 @@ install_dependencies() {
         echo "Installing core tools..."
         sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip
         
-        # Install FUSE for AppImage support
-        echo "Installing FUSE for Neovim AppImage..."
-        sudo apt-get install -y fuse libfuse2
-        
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
         NVIM_VERSION="v0.11.4"
@@ -65,27 +61,81 @@ install_dependencies() {
             CURRENT_VERSION=$(nvim --version 2>/dev/null | head -n 1 | awk '{print $2}')
             if [ "$CURRENT_VERSION" = "$NVIM_VERSION" ]; then
                 echo "✅ Neovim $NVIM_VERSION already installed"
+                return
             else
-                echo "Current Neovim version: $CURRENT_VERSION"
-                echo "Installing Neovim $NVIM_VERSION..."
-                wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
-                chmod u+x nvim.appimage
-                sudo mv nvim.appimage /usr/local/bin/nvim
+                echo "Current Neovim version: $CURRENT_VERSION, upgrading to $NVIM_VERSION..."
             fi
-        else
-            # Download and install Neovim AppImage
-            wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
-            chmod u+x nvim.appimage
+        fi
+        
+        # Try AppImage first (requires FUSE)
+        echo "Attempting AppImage installation..."
+        
+        # Install FUSE for AppImage support
+        sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
+        
+        # Download AppImage
+        wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
+        chmod u+x nvim.appimage
+        
+        # Test if AppImage works
+        if ./nvim.appimage --version &> /dev/null; then
+            echo "✅ AppImage works, installing to /usr/local/bin/nvim"
             sudo mv nvim.appimage /usr/local/bin/nvim
+        else
+            echo "⚠️  AppImage failed (likely no FUSE in container), trying extraction method..."
+            rm -f nvim.appimage
+            
+            # Download and extract AppImage manually
+            wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
+            chmod u+x nvim.appimage
+            
+            # Extract AppImage
+            ./nvim.appimage --appimage-extract &> /dev/null || {
+                echo "❌ AppImage extraction failed, trying tarball method..."
+                rm -rf squashfs-root nvim.appimage
+                
+                # Download pre-built tarball instead
+                wget -q --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
+                tar xzf nvim-linux64.tar.gz
+                sudo cp -r nvim-linux64/* /usr/local/
+                rm -rf nvim-linux64 nvim-linux64.tar.gz
+                
+                # Verify tarball installation
+                if /usr/local/bin/nvim --version &> /dev/null; then
+                    echo "✅ Neovim installed from tarball"
+                else
+                    echo "❌ All installation methods failed"
+                    exit 1
+                fi
+                
+                return
+            }
+            
+            # Move extracted files
+            sudo rm -rf /usr/local/nvim-extracted
+            sudo mv squashfs-root /usr/local/nvim-extracted
+            rm -f nvim.appimage
+            
+            # Create wrapper script
+            sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
+#!/bin/sh
+exec /usr/local/nvim-extracted/AppRun "$@"
+EOF
+            sudo chmod +x /usr/local/bin/nvim
+            
+            echo "✅ Neovim installed from extracted AppImage"
         fi
         
         # Verify installation
         echo "Verifying Neovim installation..."
-        if /usr/local/bin/nvim --version &> /dev/null; then
-            /usr/local/bin/nvim --version | head -n 1
+        if command -v nvim &> /dev/null && nvim --version &> /dev/null; then
+            nvim --version | head -n 1
             echo "✅ Neovim installed successfully"
         else
             echo "❌ Neovim installation failed"
+            echo "Checking PATH: $PATH"
+            echo "Checking /usr/local/bin:"
+            ls -la /usr/local/bin/nvim* 2>/dev/null || echo "No nvim found in /usr/local/bin"
             exit 1
         fi
         
