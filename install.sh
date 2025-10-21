@@ -341,12 +341,22 @@ install_nvim_plugins() {
     echo ""
     echo "📦 Installing Neovim plugins..."
     
-    # Try to install plugins non-interactively
     if command -v nvim &> /dev/null; then
-        echo "Running PackerSync..."
-        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 2>&1 | grep -v "^$" || true
-        echo "✅ Neovim plugins installed"
-        echo "Note: Run ':PackerSync' inside nvim if you encounter any issues"
+        echo "Running PackerSync (this may take 1-2 minutes)..."
+        echo "This will install all Neovim plugins..."
+        
+        # Run nvim headless with PackerSync
+        # The init.lua will now handle bootstrapping properly
+        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 2>&1 | tee /tmp/packer_install.log | grep -E '(Cloning|Updating|Error|Warning|Installing|Compiling)' || true
+        
+        # Check if packer_compiled exists to verify success
+        if [ -f ~/.config/nvim/plugin/packer_compiled.lua ]; then
+            echo "✅ Neovim plugins installed successfully"
+        else
+            echo "⚠️  Plugin installation may have had issues"
+            echo "Check /tmp/packer_install.log for details"
+            echo "You can run ':PackerSync' manually inside nvim"
+        fi
     else
         echo "⚠️  Neovim not found in PATH"
         echo "Note: Run ':PackerSync' inside nvim on first launch to install plugins"
