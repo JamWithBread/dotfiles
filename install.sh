@@ -4,6 +4,9 @@ set -e
 
 echo "🚀 Installing dotfiles..."
 
+# Get the absolute path to the dotfiles directory
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
     OS="mac"
@@ -277,10 +280,9 @@ install_packer() {
 setup_symlinks() {
     echo ""
     echo "🔗 Creating symlinks..."
-    
+
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
+
     echo "Dotfiles directory: $DOTFILES_DIR"
     
     # Backup and symlink nvim
