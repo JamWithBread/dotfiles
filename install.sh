@@ -51,9 +51,9 @@ install_dependencies() {
     elif [ "$OS" = "linux" ]; then
         echo "Updating package lists..."
         sudo apt-get update
-        
+
         echo "Installing core tools..."
-        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip
+        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake
         
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
