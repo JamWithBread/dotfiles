@@ -139,7 +139,9 @@ zinit snippet OMZP::systemadmin
 zinit snippet OMZP::sudo
 
 # Tmux
-zinit snippet OMZP::tmux
+# Note: OMZP::tmux tries to source tmux.extra.conf which may not exist
+# We handle tmux config via ~/.tmux.conf instead
+# zinit snippet OMZP::tmux
 zinit snippet OMZP::tmuxinator
 
 # Zinit annexes
