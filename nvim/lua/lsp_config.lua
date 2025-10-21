@@ -1,8 +1,9 @@
 -- Set up lspconfig.
---local capabilities = require('cmp_nvim_lsp').default_capabilities()
+local lspconfig = require('lspconfig')
+
 -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
-require'lspconfig'.r_language_server.setup{}
-require'lspconfig'.bashls.setup{}
+lspconfig.r_language_server.setup{}
+lspconfig.bashls.setup{}
 
 --require'navigator'.setup({
 --    lsp = {
