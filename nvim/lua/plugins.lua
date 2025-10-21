@@ -32,7 +32,7 @@ return require('packer').startup(
 
         -- Status information
         -- use 'romgrk/barbar.nvim' -- status bar
-        use {'akinsho/bufferline.nvim', commit = '73540cb95f8d95aa1af3ed57713c6720c78af915'} 
+        use {'akinsho/bufferline.nvim', tag = 'v4.*'} 
         use 'tiagovla/scope.nvim'
         use 'nvim-lualine/lualine.nvim'
         -- use 'wfxr/minimap.vim'
