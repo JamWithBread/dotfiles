@@ -151,21 +151,21 @@ return require('packer').startup(
         use 'kana/vim-better-tag-jump' -- tag jump
         use 'kana/vim-exjumplist' -- jumplist motions
 
-        -- Operators
+        -- Operators (vim-operator-user MUST load first)
         use 'kana/vim-operator-user' -- define own operator
-        use 'kana/vim-operator-replace' -- replace existing operator
-        use 'kana/vim-operator-siege'
+        use {'kana/vim-operator-replace', after = 'vim-operator-user'} -- replace existing operator
+        use {'kana/vim-operator-siege', after = 'vim-operator-user'}
 
-        -- Text objects - can tree-sitter replace these?
-        use 'kana/vim-textobj-user' -- whole buffer text object
-        use 'kana/vim-textobj-entire' -- whole buffer text object
-        use 'kana/vim-textobj-function' -- function text object
-        use 'kana/vim-textobj-line' -- line text object
-        use 'kana/vim-textobj-help' -- help text object
-        use 'kana/vim-textobj-syntax' -- syntax text object
-        use 'kana/vim-textobj-lastpat' -- lastpattern text object
-        use 'kana/vim-textobj-indent' -- indent text object
-        use 'kana/vim-textobj-fold' -- fold text object
+        -- Text objects (vim-textobj-user MUST load first)
+        use 'kana/vim-textobj-user' -- base plugin for text objects
+        use {'kana/vim-textobj-entire', after = 'vim-textobj-user'} -- whole buffer text object
+        use {'kana/vim-textobj-function', after = 'vim-textobj-user'} -- function text object
+        use {'kana/vim-textobj-line', after = 'vim-textobj-user'} -- line text object
+        use {'kana/vim-textobj-help', after = 'vim-textobj-user'} -- help text object
+        use {'kana/vim-textobj-syntax', after = 'vim-textobj-user'} -- syntax text object
+        use {'kana/vim-textobj-lastpat', after = 'vim-textobj-user'} -- lastpattern text object
+        use {'kana/vim-textobj-indent', after = 'vim-textobj-user'} -- indent text object
+        use {'kana/vim-textobj-fold', after = 'vim-textobj-user'} -- fold text object
         use 'tpope/vim-unimpaired' -- miscellaneous paired mappings
         use 'tpope/vim-abolish' -- act on word variants
         use 'wellle/targets.vim' -- more text targets (i.e. parentheses)
