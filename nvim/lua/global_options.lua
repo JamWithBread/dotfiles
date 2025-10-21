@@ -30,7 +30,7 @@ vim.opt.foldlevel = 99
 vim.opt.termguicolors = true
 vim.o.shortmess = vim.o.shortmess .. "c"
 vim.opt.cursorline = true
-vim.opt.mousemoveevent = true
+--vim.opt.mousemoveevent = true
 --set autochdir
 --set winminheight=20
 
