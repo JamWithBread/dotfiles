@@ -20,7 +20,6 @@ echo "📍 Detected OS: $OS"
 install_dependencies() {
     echo ""
     echo "📦 Installing dependencies..."
-    
     if [ "$OS" = "mac" ]; then
         # Check for Homebrew
         if ! command -v brew &> /dev/null; then
@@ -32,6 +31,15 @@ install_dependencies() {
         echo "Installing core tools..."
         brew install neovim tmux git ripgrep fd fzf zsh zoxide
         
+        # Check Neovim version
+        echo "Checking Neovim version..."
+        NVIM_VERSION=$(nvim --version | head -n 1 | awk '{print $2}')
+        echo "Installed Neovim version: $NVIM_VERSION"
+        
+        if [[ "$NVIM_VERSION" < "v0.10" ]]; then
+            echo "⚠️  Warning: Neovim version is older than 0.10. Please update with: brew upgrade neovim"
+        fi
+        
         # GNU utilities for better compatibility
         echo "Installing GNU utilities..."
         brew install coreutils findutils gnu-sed gawk grep gnu-tar
@@ -40,14 +48,25 @@ install_dependencies() {
         if [ "$SHELL" != "$(which zsh)" ]; then
             echo "Setting zsh as default shell..."
             chsh -s $(which zsh)
-        fi
-        
+        fi 
     elif [ "$OS" = "linux" ]; then
         echo "Updating package lists..."
         sudo apt-get update
         
         echo "Installing core tools..."
-        sudo apt-get install -y neovim tmux git ripgrep fd-find fzf zsh curl
+        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget
+        
+        # Install Neovim 0.11.4 from GitHub releases (pinned version)
+        echo "Installing Neovim 0.11.4..."
+        NVIM_VERSION="v0.11.4"
+        
+        # Download and install Neovim AppImage
+        wget -q https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage
+        chmod u+x nvim.appimage
+        sudo mv nvim.appimage /usr/local/bin/nvim
+        
+        # Verify installation
+        /usr/local/bin/nvim --version | head -n 1
         
         # Install zoxide
         echo "Installing zoxide..."
@@ -58,7 +77,7 @@ install_dependencies() {
             echo "Setting zsh as default shell..."
             chsh -s $(which zsh)
         fi
-    fi
+    fi     
     
     echo "✅ Dependencies installed"
 }
