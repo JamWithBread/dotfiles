@@ -102,7 +102,7 @@ create_autocmd({
 create_autocmd({
     event = {"BufNewFile", "BufRead"},
     pattern = "*",
-    command = function() vim.diagnostic.disable() end
+    command = function() vim.diagnostic.enable(false) end
 })
 
 -- Minimap
