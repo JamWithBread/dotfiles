@@ -20,6 +20,7 @@ echo "📍 Detected OS: $OS"
 install_dependencies() {
     echo ""
     echo "📦 Installing dependencies..."
+    
     if [ "$OS" = "mac" ]; then
         # Check for Homebrew
         if ! command -v brew &> /dev/null; then
@@ -48,7 +49,8 @@ install_dependencies() {
         if [ "$SHELL" != "$(which zsh)" ]; then
             echo "Setting zsh as default shell..."
             chsh -s $(which zsh)
-        fi 
+        fi
+        
     elif [ "$OS" = "linux" ]; then
         echo "Updating package lists..."
         sudo apt-get update
@@ -77,7 +79,7 @@ install_dependencies() {
             echo "Setting zsh as default shell..."
             chsh -s $(which zsh)
         fi
-    fi     
+    fi
     
     echo "✅ Dependencies installed"
 }
@@ -95,10 +97,14 @@ install_zinit() {
     else
         echo "Installing Zinit..."
         mkdir -p "$(dirname $ZINIT_HOME)"
-        git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+        
+        if git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"; then
+            echo "✅ Zinit installed successfully"
+        else
+            echo "❌ Failed to install Zinit"
+            exit 1
+        fi
     fi
-    
-    echo "✅ Zinit installed"
 }
 
 # Install Packer (nvim plugin manager)
@@ -182,15 +188,12 @@ setup_symlinks() {
     fi
 }
 
-
-
-
+# Install nvim plugins
 install_nvim_plugins() {
     echo ""
     echo "✅ Neovim setup complete"
     echo "Note: Run ':PackerSync' inside nvim on first launch to install plugins"
 }
-
 
 # Main installation
 main() {
@@ -211,10 +214,10 @@ main() {
     echo "╚════════════════════════════════════════╝"
     echo ""
     echo "Next steps:"
-    echo "  1. Restart your terminal or run: exec zsh"
+    echo "  1. Start zsh: zsh"
     echo "  2. On first zsh launch, Zinit will install all plugins (~30 seconds)"
     echo "  3. If p10k wizard appears, configure or press 'q' to use existing config"
-    echo "  4. Run 'nvim' and execute ':PackerSync' if plugins need updating"
+    echo "  4. Run 'nvim' and execute ':PackerSync' to install plugins"
     echo ""
     echo "Tips:"
     echo "  • Create ~/.zshrc.local for machine-specific configs"
