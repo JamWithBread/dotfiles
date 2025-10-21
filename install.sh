@@ -53,7 +53,12 @@ install_dependencies() {
         sudo apt-get update
 
         echo "Installing core tools..."
-        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake
+        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake locales
+
+        # Generate locale
+        echo "Configuring locale..."
+        sudo locale-gen en_US.UTF-8
+        sudo update-locale LANG=en_US.UTF-8
         
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
