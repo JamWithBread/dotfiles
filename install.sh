@@ -56,6 +56,25 @@ install_dependencies() {
         echo "Installing Neovim 0.11.4..."
         NVIM_VERSION="v0.11.4"
         
+        # Detect architecture
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)
+                NVIM_ARCH="linux64"
+                APPIMAGE_NAME="nvim.appimage"
+                ;;
+            aarch64|arm64)
+                NVIM_ARCH="linux-arm64"
+                APPIMAGE_NAME="nvim-linux-arm64.appimage"
+                ;;
+            *)
+                echo "❌ Unsupported architecture: $ARCH"
+                exit 1
+                ;;
+        esac
+        
+        echo "Detected architecture: $ARCH (using $NVIM_ARCH)"
+        
         # Check if nvim is already installed with correct version
         if command -v nvim &> /dev/null; then
             CURRENT_VERSION=$(nvim --version 2>/dev/null | head -n 1 | awk '{print $2}')
@@ -73,19 +92,23 @@ install_dependencies() {
         # Install FUSE for AppImage support
         sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
         
-        # Download AppImage
-        echo "Downloading Neovim AppImage..."
-        if wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage 2>&1; then
+        # Download AppImage (only available for x86_64 and aarch64)
+        APPIMAGE_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${APPIMAGE_NAME}"
+        echo "Downloading Neovim AppImage from: $APPIMAGE_URL"
+        
+        if wget --show-progress "$APPIMAGE_URL" -O nvim.appimage 2>&1; then
             echo "✅ Download complete"
         else
             echo "❌ Download failed, trying tarball method..."
             rm -f nvim.appimage
             
             # Jump directly to tarball method
-            wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
-            tar xzf nvim-linux64.tar.gz
-            sudo cp -r nvim-linux64/* /usr/local/
-            rm -rf nvim-linux64 nvim-linux64.tar.gz
+            TARBALL_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-${NVIM_ARCH}.tar.gz"
+            echo "Downloading Neovim tarball from: $TARBALL_URL"
+            wget --show-progress "$TARBALL_URL"
+            tar xzf "nvim-${NVIM_ARCH}.tar.gz"
+            sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
+            rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
             
             # Verify tarball installation
             if /usr/local/bin/nvim --version &> /dev/null; then
@@ -111,7 +134,7 @@ install_dependencies() {
             
             # Download and extract AppImage manually
             echo "Downloading Neovim AppImage for extraction..."
-            wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim.appimage -O nvim.appimage
+            wget --show-progress "$APPIMAGE_URL" -O nvim.appimage
             chmod u+x nvim.appimage
             
             # Extract AppImage
@@ -123,12 +146,13 @@ install_dependencies() {
                 rm -rf squashfs-root nvim.appimage
                 
                 # Download pre-built tarball instead
-                echo "Downloading Neovim tarball..."
-                wget --show-progress https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz
+                TARBALL_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-${NVIM_ARCH}.tar.gz"
+                echo "Downloading Neovim tarball from: $TARBALL_URL"
+                wget --show-progress "$TARBALL_URL"
                 echo "Extracting tarball..."
-                tar xzf nvim-linux64.tar.gz
-                sudo cp -r nvim-linux64/* /usr/local/
-                rm -rf nvim-linux64 nvim-linux64.tar.gz
+                tar xzf "nvim-${NVIM_ARCH}.tar.gz"
+                sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
+                rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
                 
                 # Verify tarball installation
                 if /usr/local/bin/nvim --version &> /dev/null; then
