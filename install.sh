@@ -4,7 +4,6 @@ set -e
 
 echo "🚀 Installing dotfiles..."
 
-# Get the absolute path to the dotfiles directory
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Detect OS
@@ -69,7 +68,7 @@ install_dependencies() {
         case "$ARCH" in
             x86_64)
                 NVIM_ARCH="linux64"
-                APPIMAGE_NAME="nvim.appimage"
+                APPIMAGE_NAME="nvim-linux-x86_64.appimage"
                 ;;
             aarch64|arm64)
                 NVIM_ARCH="linux-arm64"
@@ -178,13 +177,13 @@ install_dependencies() {
             sudo mv squashfs-root /usr/local/nvim-extracted
             rm -f nvim.appimage
             
+            sudo chmod +x /usr/local/bin/nvim
             # Create wrapper script
             echo "Creating nvim wrapper..."
             sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
 #!/bin/sh
 exec /usr/local/nvim-extracted/AppRun "$@"
 EOF
-            sudo chmod +x /usr/local/bin/nvim
             
             echo "✅ Neovim installed from extracted AppImage"
         fi
