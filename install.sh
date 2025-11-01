@@ -94,8 +94,13 @@ install_dependencies() {
             if ! command -v fzf &> /dev/null; then
                 echo "Installing fzf..."
                 sudo $PKG_MANAGER install -y fzf 2>/dev/null || {
-                    echo "Installing fzf from git..."
-                    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                    if [ -d ~/.fzf ]; then
+                        echo "fzf directory already exists, updating..."
+                        cd ~/.fzf && git pull
+                    else
+                        echo "Installing fzf from git..."
+                        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                    fi
                     ~/.fzf/install --bin
                 }
             fi
@@ -125,7 +130,7 @@ install_dependencies() {
         echo "Detected architecture: $ARCH (using $NVIM_ARCH)"
         
         # Check if nvim is already installed with correct version
-        if command -v nvim &> /dev/null; then
+        if command -v nvim &> /dev/null && nvim --version &> /dev/null; then
             CURRENT_VERSION=$(nvim --version 2>/dev/null | head -n 1 | awk '{print $2}')
             if [ "$CURRENT_VERSION" = "$NVIM_VERSION" ]; then
                 echo "✅ Neovim $NVIM_VERSION already installed"
@@ -223,10 +228,11 @@ install_dependencies() {
 
             # Create wrapper script
             echo "Creating nvim wrapper..."
-            sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
+            cat > /tmp/nvim-wrapper << 'EOF'
 #!/bin/sh
 exec /usr/local/nvim-extracted/AppRun "$@"
 EOF
+            sudo mv /tmp/nvim-wrapper /usr/local/bin/nvim
             sudo chmod +x /usr/local/bin/nvim
 
             echo "✅ Neovim installed from extracted AppImage"
