@@ -92,8 +92,8 @@ zinit snippet OMZP::copyfile
 zinit snippet OMZP::cp
 
 # Enhanced directory navigation
-zinit ice pick"init.sh"
-zinit light "b4b4r07/enhancd"
+# zinit ice pick"init.sh"
+# zinit light "b4b4r07/enhancd"  # Disabled - conflicts with completion, using zoxide instead
 zinit snippet OMZP::dircycle
 zinit snippet OMZP::dirhistory
 zinit light "zdharma-continuum/zsh-navigation-tools"
