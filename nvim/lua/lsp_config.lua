@@ -2,8 +2,14 @@
 local lspconfig = require('lspconfig')
 
 -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
-lspconfig.r_language_server.setup{}
-lspconfig.bashls.setup{}
+-- Only setup LSP servers if they're available
+if vim.fn.executable('r') == 1 then
+    lspconfig.r_language_server.setup{}
+end
+
+if vim.fn.executable('bash-language-server') == 1 then
+    lspconfig.bashls.setup{}
+end
 
 --require'navigator'.setup({
 --    lsp = {
