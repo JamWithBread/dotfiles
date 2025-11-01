@@ -48,16 +48,58 @@ install_dependencies() {
         brew install coreutils findutils gnu-sed gawk grep gnu-tar
         
     elif [ "$OS" = "linux" ]; then
-        echo "Updating package lists..."
-        sudo apt-get update
+        # Detect package manager
+        if command -v apt-get &> /dev/null; then
+            PKG_MANAGER="apt"
+        elif command -v dnf &> /dev/null; then
+            PKG_MANAGER="dnf"
+        elif command -v yum &> /dev/null; then
+            PKG_MANAGER="yum"
+        else
+            echo "❌ No supported package manager found (apt, dnf, or yum)"
+            exit 1
+        fi
 
-        echo "Installing core tools..."
-        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake locales
+        echo "Detected package manager: $PKG_MANAGER"
 
-        # Generate locale
-        echo "Configuring locale..."
-        sudo locale-gen en_US.UTF-8
-        sudo update-locale LANG=en_US.UTF-8
+        if [ "$PKG_MANAGER" = "apt" ]; then
+            echo "Updating package lists..."
+            sudo apt-get update
+
+            echo "Installing core tools..."
+            sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake locales
+
+            # Generate locale
+            echo "Configuring locale..."
+            sudo locale-gen en_US.UTF-8
+            sudo update-locale LANG=en_US.UTF-8
+        else
+            # dnf/yum (Amazon Linux, RHEL, Fedora, CentOS)
+            echo "Installing core tools..."
+            sudo $PKG_MANAGER install -y tmux git zsh curl wget unzip make gcc gcc-c++ cmake
+
+            # Install ripgrep
+            if ! command -v rg &> /dev/null; then
+                echo "Installing ripgrep..."
+                sudo $PKG_MANAGER install -y ripgrep 2>/dev/null || echo "⚠️  ripgrep not available in default repos"
+            fi
+
+            # Install fd-find (may not be in default repos)
+            if ! command -v fd &> /dev/null; then
+                echo "Installing fd-find..."
+                sudo $PKG_MANAGER install -y fd-find 2>/dev/null || echo "⚠️  fd-find not available in default repos"
+            fi
+
+            # Install fzf (may not be in default repos)
+            if ! command -v fzf &> /dev/null; then
+                echo "Installing fzf..."
+                sudo $PKG_MANAGER install -y fzf 2>/dev/null || {
+                    echo "Installing fzf from git..."
+                    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                    ~/.fzf/install --bin
+                }
+            fi
+        fi
         
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
@@ -96,8 +138,10 @@ install_dependencies() {
         # Try AppImage first (requires FUSE)
         echo "Attempting AppImage installation..."
         
-        # Install FUSE for AppImage support
-        sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
+        # Install FUSE for AppImage support (apt only)
+        if [ "$PKG_MANAGER" = "apt" ]; then
+            sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
+        fi
         
         # Download AppImage (only available for x86_64 and aarch64)
         APPIMAGE_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${APPIMAGE_NAME}"
