@@ -91,5 +91,17 @@ if vim.env.TERM == 'screen-256color' or vim.env.TERM:match('tmux') then
     vim.opt.termguicolors = true
 end
 
-vim.cmd("colorscheme desert")
+-- Use desert for limited color terminals (like AWS CloudShell), rose-pine otherwise
+local colorscheme = "rose-pine-dawn"
+
+-- Check if we're in a limited color environment
+if vim.env.TERM == 'screen-256color' or vim.env.AWS_EXECUTION_ENV then
+    colorscheme = "desert"
+end
+
+-- Fallback to desert if rose-pine isn't available
+local ok, _ = pcall(vim.cmd, "colorscheme " .. colorscheme)
+if not ok then
+    vim.cmd("colorscheme desert")
+end
 
