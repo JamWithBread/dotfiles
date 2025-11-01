@@ -86,5 +86,10 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   end
 })
 
+-- Ensure proper color support in tmux/screen
+if vim.env.TERM == 'screen-256color' or vim.env.TERM:match('tmux') then
+    vim.opt.termguicolors = true
+end
+
 vim.cmd("colorscheme rose-pine-dawn")
 
