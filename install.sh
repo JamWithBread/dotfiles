@@ -220,15 +220,15 @@ install_dependencies() {
             sudo rm -rf /usr/local/nvim-extracted
             sudo mv squashfs-root /usr/local/nvim-extracted
             rm -f nvim.appimage
-            
-            sudo chmod +x /usr/local/bin/nvim
+
             # Create wrapper script
             echo "Creating nvim wrapper..."
             sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
 #!/bin/sh
 exec /usr/local/nvim-extracted/AppRun "$@"
 EOF
-            
+            sudo chmod +x /usr/local/bin/nvim
+
             echo "✅ Neovim installed from extracted AppImage"
         fi
         
