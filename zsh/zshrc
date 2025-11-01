@@ -44,7 +44,7 @@ ulimit -n 10240
 # Completion Configuration
 # ============================================
 zstyle ':completion:*' auto-description 'specify: %d'
-zstyle ':completion:*' completer _list _oldlist _expand _complete _ignored _match _correct _approximate _prefix
+zstyle ':completion:*' completer _expand _complete _ignored _match _correct _approximate _prefix
 zstyle ':completion:*' completions 1
 zstyle ':completion:*' condition 0
 zstyle ':completion:*' expand prefix suffix
@@ -177,6 +177,17 @@ ZSH_AUTOSUGGEST_USE_ASYNC=true
 autoload -Uz compinit && compinit
 autoload -Uz compdef
 autoload -Uz promptinit && promptinit
+
+# ============================================
+# FZF Configuration
+# ============================================
+# Source fzf if installed
+if [ -f ~/.fzf.zsh ]; then
+    source ~/.fzf.zsh
+elif [ -f ~/.fzf/shell/key-bindings.zsh ]; then
+    source ~/.fzf/shell/key-bindings.zsh
+    source ~/.fzf/shell/completion.zsh
+fi
 
 # ============================================
 # Zoxide (modern cd replacement)
