@@ -80,7 +80,7 @@ zinit snippet PZTM::history
 zinit snippet PZTM::directory
 zinit snippet PZTM::spectrum
 zinit snippet PZTM::utility
-zinit snippet PZTM::completion
+# zinit snippet PZTM::completion  # Disabled - using native zsh completion instead
 
 # Colors
 zinit snippet OMZP::colorize
