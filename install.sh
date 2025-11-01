@@ -76,7 +76,7 @@ install_dependencies() {
         else
             # dnf/yum (Amazon Linux, RHEL, Fedora, CentOS)
             echo "Installing core tools..."
-            sudo $PKG_MANAGER install -y tmux git zsh curl wget unzip make gcc gcc-c++ cmake
+            sudo $PKG_MANAGER install -y tmux git zsh wget unzip make gcc gcc-c++ cmake
 
             # Install ripgrep
             if ! command -v rg &> /dev/null; then
