@@ -91,5 +91,5 @@ if vim.env.TERM == 'screen-256color' or vim.env.TERM:match('tmux') then
     vim.opt.termguicolors = true
 end
 
-vim.cmd("colorscheme rose-pine-dawn")
+vim.cmd("colorscheme desert")
 
