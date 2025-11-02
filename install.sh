@@ -257,14 +257,14 @@ EOF
         
         # Verify installation
         echo "Verifying Neovim installation..."
-        if command -v nvim &> /dev/null && nvim --version &> /dev/null; then
-            nvim --version | head -n 1
+        if [ -x ~/.local/bin/nvim ] && ~/.local/bin/nvim --version &> /dev/null; then
+            ~/.local/bin/nvim --version | head -n 1
             echo "✅ Neovim installed successfully"
         else
             echo "❌ Neovim installation failed"
             echo "Checking PATH: $PATH"
-            echo "Checking /usr/local/bin:"
-            ls -la /usr/local/bin/nvim* 2>/dev/null || echo "No nvim found in /usr/local/bin"
+            echo "Checking ~/.local/bin:"
+            ls -la ~/.local/bin/nvim* 2>/dev/null || echo "No nvim found in ~/.local/bin"
             exit 1
         fi
         
