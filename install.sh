@@ -163,17 +163,25 @@ install_dependencies() {
             echo "Downloading Neovim tarball from: $TARBALL_URL"
             wget --show-progress "$TARBALL_URL"
             tar xzf "nvim-${NVIM_ARCH}.tar.gz"
-            sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
-            rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
-            
+
+            # Install to ~/.local instead of /usr/local (persists across CloudShell restarts)
+            mkdir -p ~/.local
+            rm -rf ~/.local/nvim-from-tarball
+            mv "nvim-${NVIM_ARCH}" ~/.local/nvim-from-tarball
+            rm -f "nvim-${NVIM_ARCH}.tar.gz"
+
+            # Create symlink in ~/.local/bin
+            mkdir -p ~/.local/bin
+            ln -sf ~/.local/nvim-from-tarball/bin/nvim ~/.local/bin/nvim
+
             # Verify tarball installation
-            if /usr/local/bin/nvim --version &> /dev/null; then
-                echo "✅ Neovim installed from tarball"
+            if ~/.local/bin/nvim --version &> /dev/null; then
+                echo "✅ Neovim installed from tarball to ~/.local"
             else
                 echo "❌ All installation methods failed"
                 exit 1
             fi
-            
+
             return
         fi
         
@@ -182,8 +190,9 @@ install_dependencies() {
         # Test if AppImage works
         echo "Testing AppImage..."
         if timeout 5 ./nvim.appimage --version &> /dev/null; then
-            echo "✅ AppImage works, installing to /usr/local/bin/nvim"
-            sudo mv nvim.appimage /usr/local/bin/nvim
+            echo "✅ AppImage works, installing to ~/.local/bin/nvim"
+            mkdir -p ~/.local/bin
+            mv nvim.appimage ~/.local/bin/nvim
         else
             echo "⚠️  AppImage failed (likely no FUSE in container), trying extraction method..."
             rm -f nvim.appimage
@@ -207,35 +216,43 @@ install_dependencies() {
                 wget --show-progress "$TARBALL_URL"
                 echo "Extracting tarball..."
                 tar xzf "nvim-${NVIM_ARCH}.tar.gz"
-                sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
-                rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
-                
+
+                # Install to ~/.local instead of /usr/local
+                mkdir -p ~/.local
+                rm -rf ~/.local/nvim-from-tarball
+                mv "nvim-${NVIM_ARCH}" ~/.local/nvim-from-tarball
+                rm -f "nvim-${NVIM_ARCH}.tar.gz"
+
+                # Create symlink in ~/.local/bin
+                mkdir -p ~/.local/bin
+                ln -sf ~/.local/nvim-from-tarball/bin/nvim ~/.local/bin/nvim
+
                 # Verify tarball installation
-                if /usr/local/bin/nvim --version &> /dev/null; then
-                    echo "✅ Neovim installed from tarball"
+                if ~/.local/bin/nvim --version &> /dev/null; then
+                    echo "✅ Neovim installed from tarball to ~/.local"
                 else
                     echo "❌ All installation methods failed"
                     exit 1
                 fi
-                
+
                 return
             fi
             
-            # Move extracted files
-            sudo rm -rf /usr/local/nvim-extracted
-            sudo mv squashfs-root /usr/local/nvim-extracted
+            # Move extracted files to home directory (persists across CloudShell restarts)
+            rm -rf ~/.local/nvim-extracted
+            mkdir -p ~/.local/bin
+            mv squashfs-root ~/.local/nvim-extracted
             rm -f nvim.appimage
 
-            # Create wrapper script
+            # Create wrapper script in ~/.local/bin
             echo "Creating nvim wrapper..."
-            cat > /tmp/nvim-wrapper << 'EOF'
+            cat > ~/.local/bin/nvim << 'EOF'
 #!/bin/sh
-exec /usr/local/nvim-extracted/AppRun "$@"
+exec "$HOME/.local/nvim-extracted/AppRun" "$@"
 EOF
-            sudo mv /tmp/nvim-wrapper /usr/local/bin/nvim
-            sudo chmod +x /usr/local/bin/nvim
+            chmod +x ~/.local/bin/nvim
 
-            echo "✅ Neovim installed from extracted AppImage"
+            echo "✅ Neovim installed from extracted AppImage to ~/.local/bin"
         fi
         
         # Verify installation
