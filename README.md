@@ -34,6 +34,9 @@ Portable configuration for Neovim, Tmux, and Zsh with Powerlevel10k theme.
 # In fresh Linux environment:
 apt-get update && apt-get install -y git curl sudo
 
+# If on aws-linux
+sudo dnf install -y git
+
 # Clone the repository
 git clone https://github.com/JamWithBread/dotfiles.git ~/dotfiles
 
