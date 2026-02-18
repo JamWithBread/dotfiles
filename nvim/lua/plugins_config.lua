@@ -23,7 +23,7 @@ require("nvim-tree").setup()
 
 vim.cmd("highlight LineNr guibg=#f0f0f1")
 
-require'nvim-treesitter.configs'.setup {
+require'nvim-treesitter'.setup {
   ensure_installed = { "lua", "python", "bash", "markdown" }, -- Add "markdown"
   highlight = {
     enable = true,
