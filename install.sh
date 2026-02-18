@@ -48,16 +48,63 @@ install_dependencies() {
         brew install coreutils findutils gnu-sed gawk grep gnu-tar
         
     elif [ "$OS" = "linux" ]; then
-        echo "Updating package lists..."
-        sudo apt-get update
+        # Detect package manager
+        if command -v apt-get &> /dev/null; then
+            PKG_MANAGER="apt"
+        elif command -v dnf &> /dev/null; then
+            PKG_MANAGER="dnf"
+        elif command -v yum &> /dev/null; then
+            PKG_MANAGER="yum"
+        else
+            echo "❌ No supported package manager found (apt, dnf, or yum)"
+            exit 1
+        fi
 
-        echo "Installing core tools..."
-        sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake locales
+        echo "Detected package manager: $PKG_MANAGER"
 
-        # Generate locale
-        echo "Configuring locale..."
-        sudo locale-gen en_US.UTF-8
-        sudo update-locale LANG=en_US.UTF-8
+        if [ "$PKG_MANAGER" = "apt" ]; then
+            echo "Updating package lists..."
+            sudo apt-get update
+
+            echo "Installing core tools..."
+            sudo apt-get install -y tmux git ripgrep fd-find fzf zsh curl wget unzip build-essential cmake locales
+
+            # Generate locale
+            echo "Configuring locale..."
+            sudo locale-gen en_US.UTF-8
+            sudo update-locale LANG=en_US.UTF-8
+        else
+            # dnf/yum (Amazon Linux, RHEL, Fedora, CentOS)
+            echo "Installing core tools..."
+            sudo $PKG_MANAGER install -y tmux git zsh wget unzip make gcc gcc-c++ cmake
+
+            # Install ripgrep
+            if ! command -v rg &> /dev/null; then
+                echo "Installing ripgrep..."
+                sudo $PKG_MANAGER install -y ripgrep 2>/dev/null || echo "⚠️  ripgrep not available in default repos"
+            fi
+
+            # Install fd-find (may not be in default repos)
+            if ! command -v fd &> /dev/null; then
+                echo "Installing fd-find..."
+                sudo $PKG_MANAGER install -y fd-find 2>/dev/null || echo "⚠️  fd-find not available in default repos"
+            fi
+
+            # Install fzf (may not be in default repos)
+            if ! command -v fzf &> /dev/null; then
+                echo "Installing fzf..."
+                sudo $PKG_MANAGER install -y fzf 2>/dev/null || {
+                    if [ -d ~/.fzf ]; then
+                        echo "fzf directory already exists, updating..."
+                        cd ~/.fzf && git pull
+                    else
+                        echo "Installing fzf from git..."
+                        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+                    fi
+                    ~/.fzf/install --bin
+                }
+            fi
+        fi
         
         # Install Neovim 0.11.4 from GitHub releases (pinned version)
         echo "Installing Neovim 0.11.4..."
@@ -83,7 +130,7 @@ install_dependencies() {
         echo "Detected architecture: $ARCH (using $NVIM_ARCH)"
         
         # Check if nvim is already installed with correct version
-        if command -v nvim &> /dev/null; then
+        if command -v nvim &> /dev/null && nvim --version &> /dev/null; then
             CURRENT_VERSION=$(nvim --version 2>/dev/null | head -n 1 | awk '{print $2}')
             if [ "$CURRENT_VERSION" = "$NVIM_VERSION" ]; then
                 echo "✅ Neovim $NVIM_VERSION already installed"
@@ -96,8 +143,10 @@ install_dependencies() {
         # Try AppImage first (requires FUSE)
         echo "Attempting AppImage installation..."
         
-        # Install FUSE for AppImage support
-        sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
+        # Install FUSE for AppImage support (apt only)
+        if [ "$PKG_MANAGER" = "apt" ]; then
+            sudo apt-get install -y fuse libfuse2 2>/dev/null || echo "FUSE installation failed, will try alternative method"
+        fi
         
         # Download AppImage (only available for x86_64 and aarch64)
         APPIMAGE_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${APPIMAGE_NAME}"
@@ -114,17 +163,25 @@ install_dependencies() {
             echo "Downloading Neovim tarball from: $TARBALL_URL"
             wget --show-progress "$TARBALL_URL"
             tar xzf "nvim-${NVIM_ARCH}.tar.gz"
-            sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
-            rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
-            
+
+            # Install to ~/.local instead of /usr/local (persists across CloudShell restarts)
+            mkdir -p ~/.local
+            rm -rf ~/.local/nvim-from-tarball
+            mv "nvim-${NVIM_ARCH}" ~/.local/nvim-from-tarball
+            rm -f "nvim-${NVIM_ARCH}.tar.gz"
+
+            # Create symlink in ~/.local/bin
+            mkdir -p ~/.local/bin
+            ln -sf ~/.local/nvim-from-tarball/bin/nvim ~/.local/bin/nvim
+
             # Verify tarball installation
-            if /usr/local/bin/nvim --version &> /dev/null; then
-                echo "✅ Neovim installed from tarball"
+            if ~/.local/bin/nvim --version &> /dev/null; then
+                echo "✅ Neovim installed from tarball to ~/.local"
             else
                 echo "❌ All installation methods failed"
                 exit 1
             fi
-            
+
             return
         fi
         
@@ -133,8 +190,9 @@ install_dependencies() {
         # Test if AppImage works
         echo "Testing AppImage..."
         if timeout 5 ./nvim.appimage --version &> /dev/null; then
-            echo "✅ AppImage works, installing to /usr/local/bin/nvim"
-            sudo mv nvim.appimage /usr/local/bin/nvim
+            echo "✅ AppImage works, installing to ~/.local/bin/nvim"
+            mkdir -p ~/.local/bin
+            mv nvim.appimage ~/.local/bin/nvim
         else
             echo "⚠️  AppImage failed (likely no FUSE in container), trying extraction method..."
             rm -f nvim.appimage
@@ -158,46 +216,55 @@ install_dependencies() {
                 wget --show-progress "$TARBALL_URL"
                 echo "Extracting tarball..."
                 tar xzf "nvim-${NVIM_ARCH}.tar.gz"
-                sudo cp -r "nvim-${NVIM_ARCH}"/* /usr/local/
-                rm -rf "nvim-${NVIM_ARCH}" "nvim-${NVIM_ARCH}.tar.gz"
-                
+
+                # Install to ~/.local instead of /usr/local
+                mkdir -p ~/.local
+                rm -rf ~/.local/nvim-from-tarball
+                mv "nvim-${NVIM_ARCH}" ~/.local/nvim-from-tarball
+                rm -f "nvim-${NVIM_ARCH}.tar.gz"
+
+                # Create symlink in ~/.local/bin
+                mkdir -p ~/.local/bin
+                ln -sf ~/.local/nvim-from-tarball/bin/nvim ~/.local/bin/nvim
+
                 # Verify tarball installation
-                if /usr/local/bin/nvim --version &> /dev/null; then
-                    echo "✅ Neovim installed from tarball"
+                if ~/.local/bin/nvim --version &> /dev/null; then
+                    echo "✅ Neovim installed from tarball to ~/.local"
                 else
                     echo "❌ All installation methods failed"
                     exit 1
                 fi
-                
+
                 return
             fi
             
-            # Move extracted files
-            sudo rm -rf /usr/local/nvim-extracted
-            sudo mv squashfs-root /usr/local/nvim-extracted
+            # Move extracted files to home directory (persists across CloudShell restarts)
+            rm -rf ~/.local/nvim-extracted
+            mkdir -p ~/.local/bin
+            mv squashfs-root ~/.local/nvim-extracted
             rm -f nvim.appimage
-            
-            sudo chmod +x /usr/local/bin/nvim
-            # Create wrapper script
+
+            # Create wrapper script in ~/.local/bin
             echo "Creating nvim wrapper..."
-            sudo tee /usr/local/bin/nvim > /dev/null << 'EOF'
+            cat > ~/.local/bin/nvim << 'EOF'
 #!/bin/sh
-exec /usr/local/nvim-extracted/AppRun "$@"
+exec "$HOME/.local/nvim-extracted/AppRun" "$@"
 EOF
-            
-            echo "✅ Neovim installed from extracted AppImage"
+            chmod +x ~/.local/bin/nvim
+
+            echo "✅ Neovim installed from extracted AppImage to ~/.local/bin"
         fi
         
         # Verify installation
         echo "Verifying Neovim installation..."
-        if command -v nvim &> /dev/null && nvim --version &> /dev/null; then
-            nvim --version | head -n 1
+        if [ -x ~/.local/bin/nvim ] && ~/.local/bin/nvim --version &> /dev/null; then
+            ~/.local/bin/nvim --version | head -n 1
             echo "✅ Neovim installed successfully"
         else
             echo "❌ Neovim installation failed"
             echo "Checking PATH: $PATH"
-            echo "Checking /usr/local/bin:"
-            ls -la /usr/local/bin/nvim* 2>/dev/null || echo "No nvim found in /usr/local/bin"
+            echo "Checking ~/.local/bin:"
+            ls -la ~/.local/bin/nvim* 2>/dev/null || echo "No nvim found in ~/.local/bin"
             exit 1
         fi
         
