@@ -8,6 +8,11 @@ set_var({
     value = 1
 })
 
+-- Detect .tsv / .tab as csv up front, so csv.vim's ftplugin runs before any
+-- csv syntax script (Neovim's own tsv syntax otherwise loads csv.vim's syntax
+-- first, which warns "Invalid column pattern").
+vim.filetype.add({ extension = { tsv = "csv", tab = "csv" } })
+
 -- Minimap
 set_var({
     variable = "minimap_highlight_search",
