@@ -7,7 +7,6 @@ vim.cmd("syntax on")
 require("nvim-web-devicons").setup({
     color_icons = false
 })
-require("symbols-outline").setup()
 require("scope").setup()
 
 require("notify").setup()

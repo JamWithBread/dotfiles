@@ -106,9 +106,6 @@ return require('packer').startup(
         -- Surround
         use 'kylechui/nvim-surround' -- to add quotes etc. around word
 
-        -- Tags - redundant?
-        use 'simrat39/symbols-outline.nvim'
-
         -- Vimscript plugins
         -- Try to find Lua ports of these
         use 'chrisbra/csv.vim' -- display CSV
